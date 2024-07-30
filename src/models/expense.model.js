@@ -28,6 +28,14 @@ const expenseSchema = new mongoose.Schema(
       type: mongoose.Types.Decimal128,
       required: true,
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
