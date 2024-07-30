@@ -80,7 +80,7 @@ Change `.env.example` file to `.env` and add the following required variables:
 
 ## API Reference
 
-Test API Endpoints: [Postman Collection](https://www.postman.com/altimetry-saganist-53324669/workspace/github/collection/17929702-302bbd1f-732e-4e6c-9356-435188f655c1?action=share&creator=17929702&active-environment=17929702-658cced1-cde0-411b-91a3-22e346d64490)
+Test API Endpoints: [Postman Collection](https://www.postman.com/shahi77/workspace/github/collection/28412567-60b7950b-8367-46ce-ae2e-7afc1e613a13?action=share&creator=28412567)
 
 ## Sign Up
 
