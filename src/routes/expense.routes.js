@@ -10,8 +10,8 @@ import { verifyJwt } from "../middlewares/auth.middleware.js";
 const expenseRouter = express.Router();
 
 expenseRouter.post("/", verifyJwt, addExpense);
-//expenseRouter.get("/:email", verifyJwt, getUserExpenses);
-// expenseRouter.get("/", verifyJwt, getAllExpenses);
-// expenseRouter.get("/download", verifyJwt, downloadBalanceSheet);
+expenseRouter.get("/:email", verifyJwt, getUserExpenses);
+expenseRouter.get("/", verifyJwt, getAllExpenses);
+expenseRouter.get("/download", verifyJwt, downloadBalanceSheet);
 
 export default expenseRouter;

@@ -52,4 +52,44 @@ const addExpense = asyncHandler(async (req, res) => {
   }
 });
 
-export { addExpense };
+// Get individual user expenses
+const getUserExpenses = asyncHandler(async (req, res) => {
+  const { email } = req.params;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  const expenses = await Expense.find({ payers: user._id });
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, expenses, "User expenses retrieved successfully")
+    );
+});
+
+// Get all expenses
+const getAllExpenses = asyncHandler(async (req, res) => {
+  const expenses = await Expense.find();
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, expenses, "All expenses retrieved successfully")
+    );
+});
+
+// TODO: Download balance sheet
+const downloadBalanceSheet = asyncHandler(async (req, res) => {
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        {},
+        "Balance sheet download feature not implemented yet"
+      )
+    );
+});
+
+export { addExpense, getUserExpenses, getAllExpenses, downloadBalanceSheet };
