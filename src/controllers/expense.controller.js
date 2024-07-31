@@ -3,11 +3,11 @@ import User from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { createObjectCsvWriter } from "csv-writer";
-import path from "path";
+import ExcelJS from "exceljs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs";
+import path from "path";
 
 // Add an expense
 const addExpense = asyncHandler(async (req, res) => {
@@ -92,14 +92,58 @@ const downloadBalanceSheet = asyncHandler(async (req, res) => {
     throw new ApiError(404, "No expenses found.");
   }
 
-  const csvData = expenses.map((expense) => ({
-    description: expense.description,
-    splitMethod: expense.splitMethod,
-    totalExpense: expense.totalExpense.toString(),
-    payers: expense.payers.map((payer) => payer.name).join(", "),
-    amounts: expense.amounts.map((amount) => amount.toString()).join(", "),
-  }));
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Balance Sheet");
 
+  // Set up headers
+  worksheet.columns = [
+    { header: "Description", key: "description", width: 30 },
+    { header: "Split Method", key: "splitMethod", width: 15 },
+    { header: "Total Expense", key: "totalExpense", width: 15 },
+    { header: "Payers", key: "payers", width: 30 },
+    { header: "Amounts", key: "amounts", width: 20 },
+  ];
+
+  // Add individual expenses
+  expenses.forEach((expense) => {
+    worksheet.addRow({
+      description: expense.description,
+      splitMethod: expense.splitMethod,
+      totalExpense: expense.totalExpense,
+      payers: expense.payers.map((payer) => payer.name).join(", "),
+      amounts: expense.amounts.join(", "),
+    });
+  });
+
+  // Calculate overall expenses for all users
+  const overallExpenses = {};
+  expenses.forEach((expense) => {
+    expense.payers.forEach((payer, index) => {
+      if (!overallExpenses[payer.name]) {
+        overallExpenses[payer.name] = 0;
+      }
+      overallExpenses[payer.name] =
+        Number(expense.amounts[index]) + Number(overallExpenses[payer.name]);
+    });
+  });
+
+  // Add a blank row for separation
+  worksheet.addRow([]);
+
+  // Add overall expenses section
+  worksheet.addRow(["Overall Expenses"]);
+  worksheet.addRow(["User", "Total Amount"]);
+  Object.entries(overallExpenses).forEach(([user, amount]) => {
+    worksheet.addRow([user, amount]);
+  });
+
+  // Style the worksheet
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(
+    worksheet.rowCount - Object.keys(overallExpenses).length - 1
+  ).font = { bold: true };
+
+  // Prepare file for download
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
   const tempDir = path.join(__dirname, "..", "..", "temp");
@@ -107,31 +151,24 @@ const downloadBalanceSheet = asyncHandler(async (req, res) => {
     fs.mkdirSync(tempDir, { recursive: true });
   }
 
-  const csvFilePath = path.join(tempDir, "balance_sheet.csv");
+  const excelFilePath = path.join(tempDir, "balance_sheet.xlsx");
 
-  const csvWriter = createObjectCsvWriter({
-    path: csvFilePath,
-    header: [
-      { id: "description", title: "Description" },
-      { id: "splitMethod", title: "Split Method" },
-      { id: "totalExpense", title: "Total Expense" },
-      { id: "payers", title: "Payers" },
-      { id: "amounts", title: "Amounts" },
-    ],
-  });
-  await csvWriter.writeRecords(csvData);
+  await workbook.xlsx.writeFile(excelFilePath);
 
-  const fileContent = fs.readFileSync(csvFilePath);
+  const fileContent = fs.readFileSync(excelFilePath);
 
-  res.setHeader("Content-Type", "text/csv");
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
   res.setHeader(
     "Content-Disposition",
-    "attachment; filename=balance_sheet.csv"
+    "attachment; filename=balance_sheet.xlsx"
   );
 
   res.send(fileContent);
 
-  console.log(`CSV file saved at: ${csvFilePath}`);
+  console.log(`Excel file saved at: ${excelFilePath}`);
 });
 
 export { addExpense, getUserExpenses, getAllExpenses, downloadBalanceSheet };

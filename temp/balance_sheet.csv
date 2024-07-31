@@ -1,3 +1,5 @@
 Description,Split Method,Total Expense,Payers,Amounts
 Dinner,Equal,3000,"John Doe, Bob","1500, 1500"
 Movie Night,Percentage,100,"Alice , John Doe","60, 40"
+Lunch,Exact,350,"Bob, Alice ","150, 200"
+Breakfast,Percentage,100,"Bob, Alice ","20, 80"
